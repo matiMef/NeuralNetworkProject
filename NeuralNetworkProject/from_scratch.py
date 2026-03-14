@@ -21,6 +21,25 @@ data = data.drop("yr_built", axis=1)
 X = data.drop("price", axis=1)
 X_normalized = (X - X.mean(axis=0)) / X.std(axis=0)
 
+X_np = X_normalized.values
+Y_np = price.values
+
+np.random.seed()
+indicates = np.random.permutation(len(X_np))
+
+tren_size = int(0.8 * len(X_np))
+val_size = int(0.1 * len(X_np))
+
+tren_idx = indicates[:tren_size]
+val_idx = indicates[tren_size: tren_size + val_size]
+test_idx = indicates[tren_size + val_size:]
+
+X_tren, Y_tren = X_np[tren_idx], Y_np[tren_idx]
+X_val, Y_val = X_np[val_idx], Y_np[val_idx]
+X_test, Y_test = X_np[test_idx], Y_np[test_idx]
+
+print(X_np)
+
 def dataset_testing():
     print(price)
     print(data["price"].head(50))
@@ -41,4 +60,12 @@ def dataset_testing():
     print(ok)
     print(X_normalized)
     print(data)
-
+    print(len(tren_idx))
+    print(len(val_idx))
+    print(len(test_idx))
+    print(tren_idx[17288])
+    print(val_idx[0])
+    print(val_idx[2160])
+    print(test_idx[0])
+    print(tren_size)
+    print(indicates)
