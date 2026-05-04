@@ -4,44 +4,46 @@ import matplotlib.pyplot as plt
 
 # --- 1. Przygotowanie danych ---
 current_year = 2026
-# Zakładamy, że plik kc_house_data.csv jest w tym samym folderze
 data = pd.read_csv('kc_house_data.csv')
 data = data[["sqft_living", "sqft_lot", "lat", "long", "yr_built", "yr_renovated", "floors", "bedrooms", "bathrooms", "price"]]
 
-# Filtrowanie i clipping
 data = data[data["bedrooms"] <= 15]
 data["sqft_lot"] = data["sqft_lot"].clip(upper=213008)
 data["sqft_living"] = data["sqft_living"].clip(upper=4978)
 
-# Nowe cechy
 last_refurb_year = data["yr_renovated"].mask(data["yr_renovated"] == 0, data["yr_built"])
 data["years_since_refurb"] = current_year - last_refurb_year
 data["house_age"] = current_year - data["yr_built"]
 
 data = data.drop(["yr_renovated", "yr_built"], axis=1)
 
-# Normalizacja X
 X = data.drop("price", axis=1)
 X_normalized = (X - X.mean(axis=0)) / X.std(axis=0)
 
 X_np = X_normalized.values
 Y_np = data["price"].values.reshape(-1, 1) # Od razu do (m, 1)
 
-# Podział na zbiory
 np.random.seed(42)
 indices = np.random.permutation(len(X_np))
 tren_size = int(0.8 * len(X_np))
 
-X_tren = X_np[indices[:tren_size]]
-Y_tren = Y_np[indices[:tren_size]]
+tren_size = int(0.8 * len(X_np))
+val_size = int(0.1 * len(X_np))
 
-# Normalizacja Y (Kluczowe dla stabilności sieci)
+tren_idx = indices[:tren_size]
+val_idx = indices[tren_size : tren_size + val_size]
+test_idx = indices[tren_size + val_size:]
+
+X_tren, Y_tren = X_np[tren_idx], Y_np[tren_idx]
+X_val, Y_val = X_np[val_idx], Y_np[val_idx]
+X_test, Y_test = X_np[test_idx], Y_np[test_idx]
+
 y_mean = Y_tren.mean()
 y_std = Y_tren.std()
 Y_tren_norm = (Y_tren - y_mean) / y_std
+Y_val_norm = (Y_val - y_mean) / y_std  
 
 # --- 2. Inicjalizacja Sieci ---
-# Używamy lepszej inicjalizacji (He initialization)
 W1 = np.random.randn(9, 64) * np.sqrt(2./9)
 b1 = np.zeros((1, 64))
 W2 = np.random.randn(64, 32) * np.sqrt(2./64)
@@ -91,26 +93,57 @@ def backprop(y_hat, Y, cache):
 
     return dW1, db1, dW2, db2, dW3, db3
 
+def mae_metric(y_hat, y, scale_back=False):
+    if scale_back:
+        return np.mean(np.abs((y_hat * y_std + y_mean) - (y * y_std + y_mean)))
+    return np.mean(np.abs(y_hat - y))
+
 # --- 4. Główna Pętla Treningowa ---
 def train(epochs=50000, alpha=0.01):
     global W1, W2, W3, b1, b2, b3
-    history = []
+    # Listy do przechowywania historii wszystkich metryk
+    h_train_mse = []
+    h_val_mse = []
+    h_train_mae = []
+    h_val_mae = []
 
-    plt.ion() # Włączenie trybu interaktywnego dla wykresu
-    fig, ax = plt.subplots()
-    line, = ax.plot([], [], 'r-')
-    ax.set_title("Koszt w czasie rzeczywistym")
-    ax.set_xlabel("Epoka")
-    ax.set_ylabel("MSE")
+    plt.ion()
+    fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Wykres 1: MSE
+    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
+    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
+    ax_mse.set_title("Koszt (MSE) - Normalizacja")
+    ax_mse.legend()
+
+    # Wykres 2: MAE
+    l_train_mae, = ax_mae.plot([], [], 'r--', label='Train MAE ($)')
+    l_val_mae, = ax_mae.plot([], [], 'b--', label='Val MAE ($)')
+    ax_mae.set_title("Błąd Średni (MAE) w Dolarach")
+    ax_mae.legend()
 
     for e in range(epochs):
+        # --- 1. Forward Pass ---
         y_hat, cache = feed_forward(X_tren)
-        loss = cost(y_hat, Y_tren_norm)
-        history.append(loss)
+        loss_mse = cost(y_hat, Y_tren_norm)
+        
+        y_val_hat, _ = feed_forward(X_val)
+        val_loss_mse = cost(y_val_hat, Y_val_norm)
 
+        # --- 2. Obliczanie MAE w dolarach ---
+        train_mae = np.mean(np.abs(y_hat - Y_tren_norm)) * y_std
+        val_mae = np.mean(np.abs(y_val_hat - Y_val_norm)) * y_std
+
+        # Zapisywanie historii
+        h_train_mse.append(loss_mse)
+        h_val_mse.append(val_loss_mse)
+        h_train_mae.append(train_mae)
+        h_val_mae.append(val_mae)
+
+        # --- 3. Backpropagation ---
         dW1, db1, dW2, db2, dW3, db3 = backprop(y_hat, Y_tren_norm, cache)
 
-        # Aktualizacja wag
+        # --- 4. Aktualizacja wag ---
         W1 -= alpha * dW1
         b1 -= alpha * db1
         W2 -= alpha * dW2
@@ -118,20 +151,39 @@ def train(epochs=50000, alpha=0.01):
         W3 -= alpha * dW3
         b3 -= alpha * db3
 
-        if e % 10 == 0:
-            # Aktualizacja wykresu
-            line.set_xdata(range(len(history)))
-            line.set_ydata(history)
-            ax.relim()
-            ax.autoscale_view()
-            plt.pause(0.01)
-            if e % 100 == 0:
-                print(f"Epoch {e}, Cost: {loss:.6f}")
+        # --- 5. Wizualizacja ---
+        if e % 100 == 0:
+            # Aktualizacja linii MSE
+            l_train_mse.set_data(range(len(h_train_mse)), h_train_mse)
+            l_val_mse.set_data(range(len(h_val_mse)), h_val_mse)
+            ax_mse.relim()
+            ax_mse.autoscale_view()
 
-    plt.ioff() # Wyłączenie trybu interaktywnego
+            l_train_mae.set_data(range(len(h_train_mae)), h_train_mae)
+            l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
+            ax_mae.relim()
+            ax_mae.autoscale_view()
+
+            plt.pause(0.01)
+            print(f"Epoch {e} | Train MAE: {train_mae:.0f}$ | Val MAE: {val_mae:.0f}$")
+
+    plt.ioff()
     plt.show()
-    return history
+    return h_train_mse, h_val_mse
+
+def predict(X):
+    y_norm_pred, _ = feed_forward(X)
+    return y_norm_pred * y_std + y_mean
 
 # --- 5. Wywołanie ---
-costs = train(epochs=50000, alpha=0.01)
+train_history, val_history = train(epochs=20000, alpha=0.01)
+y_test_pred = predict(X_test)
+mae = np.mean(np.abs(y_test_pred - Y_test))
+print(f"\n--- WYNIK KOŃCOWY ---")
+print(f"Średni błąd (MAE): {mae:.2f} $")
 
+plt.scatter(Y_test, y_test_pred, alpha=0.5)
+plt.plot([Y_test.min(), Y_test.max()], [Y_test.min(), Y_test.max()], 'r--')
+plt.xlabel("Cena prawdziwa")
+plt.ylabel("Cena przewidziana")
+plt.show()
