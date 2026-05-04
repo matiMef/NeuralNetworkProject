@@ -190,7 +190,7 @@ def predict(X):
     return y_norm_pred * y_std + y_mean
 
 # --- 5. Wywołanie ---
-train_history, val_history = train(epochs=25000, alpha=0.005)
+train_history, val_history = train(epochs=25000, alpha=0.001)
 y_test_pred = predict(X_test)
 mae = np.mean(np.abs(y_test_pred - Y_test))
 print(f"\n--- WYNIK KOŃCOWY ---")
