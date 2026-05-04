@@ -44,9 +44,9 @@ Y_tren_norm = (Y_tren - y_mean) / y_std
 Y_val_norm = (Y_val - y_mean) / y_std  
 
 # --- 2. Inicjalizacja Sieci ---
-W1 = np.random.randn(9, 64) * np.sqrt(2./9)
-b1 = np.zeros((1, 64))
-W2 = np.random.randn(64, 32) * np.sqrt(2./64)
+W1 = np.random.randn(9, 128) * np.sqrt(2./9)
+b1 = np.zeros((1, 128))
+W2 = np.random.randn(128, 32) * np.sqrt(2./128)
 b2 = np.zeros((1, 32))
 W3 = np.random.randn(32, 16) * np.sqrt(2./32) # Nowa warstwa
 b3 = np.zeros((1, 16))
@@ -190,7 +190,7 @@ def predict(X):
     return y_norm_pred * y_std + y_mean
 
 # --- 5. Wywołanie ---
-train_history, val_history = train(epochs=10000, alpha=0.01)
+train_history, val_history = train(epochs=25000, alpha=0.005)
 y_test_pred = predict(X_test)
 mae = np.mean(np.abs(y_test_pred - Y_test))
 print(f"\n--- WYNIK KOŃCOWY ---")
