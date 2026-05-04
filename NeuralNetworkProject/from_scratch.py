@@ -48,9 +48,10 @@ W1 = np.random.randn(9, 64) * np.sqrt(2./9)
 b1 = np.zeros((1, 64))
 W2 = np.random.randn(64, 32) * np.sqrt(2./64)
 b2 = np.zeros((1, 32))
-W3 = np.random.randn(32, 1) * np.sqrt(2./32)
-b3 = np.zeros((1, 1))
-
+W3 = np.random.randn(32, 16) * np.sqrt(2./32) # Nowa warstwa
+b3 = np.zeros((1, 16))
+W4 = np.random.randn(16, 1) * np.sqrt(2./16)  # Warstwa wyjściowa
+b4 = np.zeros((1, 1))
 # --- 3. Funkcje Pomocnicze ---
 def relu(Z):
     return np.maximum(0, Z)
@@ -68,30 +69,41 @@ def feed_forward(A0):
     Z2 = A1 @ W2 + b2
     A2 = relu(Z2)
     Z3 = A2 @ W3 + b3
-    cache = {"A0": A0, "Z1": Z1, "A1": A1, "Z2": Z2, "A2": A2}
-    return Z3, cache
+    A3 = relu(Z3)
+    Z4 = A3 @ W4 + b4
+    cache = {"A0": A0, "Z1": Z1, "A1": A1, "Z2": Z2, "A2": A2, "Z3": Z3, "A3": A3}
+    return Z4, cache
 
 def backprop(y_hat, Y, cache):
-    global W1, W2, W3, b1, b2, b3
+    global W1, W2, W3, W4, b1, b2, b3, b4
     m = Y.shape[0]
-    A0, A1, A2 = cache["A0"], cache["A1"], cache["A2"]
-    Z1, Z2 = cache["Z1"], cache["Z2"]
+    A0, A1, A2, A3 = cache["A0"], cache["A1"], cache["A2"], cache["A3"]
+    Z1, Z2, Z3 = cache["Z1"], cache["Z2"], cache["Z3"]
 
-    dZ3 = (y_hat - Y) / m
+    # 1. Błąd na wyjściu (Warstwa 4 - liniowa)
+    dZ4 = (y_hat - Y) / m
+    dW4 = A3.T @ dZ4
+    db4 = np.sum(dZ4, axis=0, keepdims=True)
+
+    # 2. Propagacja do Warstwy 3
+    dA3 = dZ4 @ W4.T
+    dZ3 = dA3 * relu_derivative(Z3)  # Musisz uwzględnić aktywację relu z Z3!
     dW3 = A2.T @ dZ3
     db3 = np.sum(dZ3, axis=0, keepdims=True)
 
+    # 3. Propagacja do Warstwy 2
     dA2 = dZ3 @ W3.T
     dZ2 = dA2 * relu_derivative(Z2)
     dW2 = A1.T @ dZ2
     db2 = np.sum(dZ2, axis=0, keepdims=True)
 
+    # 4. Propagacja do Warstwy 1
     dA1 = dZ2 @ W2.T
     dZ1 = dA1 * relu_derivative(Z1)
     dW1 = A0.T @ dZ1
     db1 = np.sum(dZ1, axis=0, keepdims=True)
 
-    return dW1, db1, dW2, db2, dW3, db3
+    return dW1, db1, dW2, db2, dW3, db3, dW4, db4
 
 def mae_metric(y_hat, y, scale_back=False):
     if scale_back:
@@ -99,8 +111,8 @@ def mae_metric(y_hat, y, scale_back=False):
     return np.mean(np.abs(y_hat - y))
 
 # --- 4. Główna Pętla Treningowa ---
-def train(epochs=50000, alpha=0.01):
-    global W1, W2, W3, b1, b2, b3
+def train(epochs=10000, alpha=0.01):
+    global W1, W2, W3, W4, b1, b2, b3, b4
     # Listy do przechowywania historii wszystkich metryk
     h_train_mse = []
     h_val_mse = []
@@ -141,7 +153,7 @@ def train(epochs=50000, alpha=0.01):
         h_val_mae.append(val_mae)
 
         # --- 3. Backpropagation ---
-        dW1, db1, dW2, db2, dW3, db3 = backprop(y_hat, Y_tren_norm, cache)
+        dW1, db1, dW2, db2, dW3, db3, dW4, db4 = backprop(y_hat, Y_tren_norm, cache)
 
         # --- 4. Aktualizacja wag ---
         W1 -= alpha * dW1
@@ -150,6 +162,8 @@ def train(epochs=50000, alpha=0.01):
         b2 -= alpha * db2
         W3 -= alpha * dW3
         b3 -= alpha * db3
+        W4 -= alpha * dW4
+        b4 -= alpha * db4
 
         # --- 5. Wizualizacja ---
         if e % 100 == 0:
@@ -176,7 +190,7 @@ def predict(X):
     return y_norm_pred * y_std + y_mean
 
 # --- 5. Wywołanie ---
-train_history, val_history = train(epochs=20000, alpha=0.01)
+train_history, val_history = train(epochs=10000, alpha=0.01)
 y_test_pred = predict(X_test)
 mae = np.mean(np.abs(y_test_pred - Y_test))
 print(f"\n--- WYNIK KOŃCOWY ---")
@@ -186,4 +200,37 @@ plt.scatter(Y_test, y_test_pred, alpha=0.5)
 plt.plot([Y_test.min(), Y_test.max()], [Y_test.min(), Y_test.max()], 'r--')
 plt.xlabel("Cena prawdziwa")
 plt.ylabel("Cena przewidziana")
+plt.show()
+
+# --- 6. Analiza błędu MSE w zależności od ceny (Histogram/Wykres słupkowy) ---
+
+# 1. Obliczamy błąd kwadratowy dla każdego domu w zbiorze testowym
+# Używamy cen rzeczywistych i przewidzianych w dolarach
+squared_errors = (y_test_pred - Y_test)**2
+
+# 2. Definiujemy przedziały cenowe (np. co 200 000$)
+bins = np.arange(0, Y_test.max() + 200000, 200000)
+bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
+
+# 3. Przypisujemy błędy do odpowiednich przedziałów cenowych
+# Spłaszczamy tablice do 1D dla funkcji pandas
+df_error = pd.DataFrame({
+    'Actual_Price': Y_test.flatten(),
+    'Squared_Error': squared_errors.flatten()
+})
+
+df_error['Price_Bin'] = pd.cut(df_error['Actual_Price'], bins=bins, labels=bin_labels)
+
+# 4. Obliczamy średnie MSE dla każdego przedziału
+mse_per_bin = df_error.groupby('Price_Bin', observed=False)['Squared_Error'].mean()
+
+# 5. Tworzenie wykresu
+plt.figure(figsize=(12, 6))
+mse_per_bin.plot(kind='bar', color='skyblue', edgecolor='black')
+plt.title("Średni błąd MSE w zależności od przedziału cenowego nieruchomości")
+plt.xlabel("Przedział cenowy domu [$]")
+plt.ylabel("Średni błąd kwadratowy (MSE)")
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
 plt.show()
