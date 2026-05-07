@@ -1,16 +1,14 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.neural_network import MLPRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 W1 = np.random.randn(9, 128) * np.sqrt(2./9)
 b1 = np.zeros((1, 128))
 W2 = np.random.randn(128, 32) * np.sqrt(2./128)
 b2 = np.zeros((1, 32))
-W3 = np.random.randn(32, 16) * np.sqrt(2./32) # Nowa warstwa
+W3 = np.random.randn(32, 16) * np.sqrt(2./32) 
 b3 = np.zeros((1, 16))
-W4 = np.random.randn(16, 1) * np.sqrt(2./16)  # Warstwa wyjściowa
+W4 = np.random.randn(16, 1) * np.sqrt(2./16)  
 b4 = np.zeros((1, 1))
 
 def relu(Z):
