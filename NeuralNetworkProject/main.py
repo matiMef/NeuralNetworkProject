@@ -1,6 +1,8 @@
 from dataset import Dataset
+from from_scratch import NN_from_scratch
 from scikit_learn_NN import MLP_NN
 from scikit_learn_LR import linear_regression
+from scikit_learn_RF import random_forest
 
 def scikit_MLP_comparison(scikit_results) -> None:
     best_result = float('inf')
@@ -13,6 +15,8 @@ def scikit_MLP_comparison(scikit_results) -> None:
 
 def main() -> None:
     ds = Dataset('kc_house_data.csv')
+
+    # NN_from_scratch(ds, 10000, 0.001)
 
     # scikit_results = []
     # scikit_tests = [
@@ -38,6 +42,7 @@ def main() -> None:
     # scikit_MLP_comparison(scikit_results)
 
     # linear_regression(ds)
+    random_forest(ds)
 
 if __name__ == "__main__":
     main()

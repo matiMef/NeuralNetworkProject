@@ -21,8 +21,12 @@ def cost(y_hat, y):
     m = y.shape[0]
     return (1 / (2 * m)) * np.sum((y_hat - y)**2)
 
+def predict(ds, X):
+    y_norm_pred, _ = feed_forward(X)
+    return y_norm_pred * ds.y_std + ds.y_mean
+
 def feed_forward(A0):
-    Z1 = A0 @ W1 + b1
+    Z1 = A0 @ W1 + b1 
     A1 = relu(Z1)
     Z2 = A1 @ W2 + b2
     A2 = relu(Z2)
@@ -59,12 +63,12 @@ def backprop(y_hat, Y, cache):
 
     return dW1, db1, dW2, db2, dW3, db3, dW4, db4
 
-def mae_metric(y_hat, y, scale_back=False):
+def mae_metric(ds, y_hat, y, scale_back=False):
     if scale_back:
-        return np.mean(np.abs((y_hat * y_std + y_mean) - (y * y_std + y_mean)))
+        return np.mean(np.abs((y_hat * ds.y_std + ds.y_mean) - (y * ds.y_std + ds.y_mean)))
     return np.mean(np.abs(y_hat - y))
 
-def train(epochs=10000, alpha=0.01):
+def train(ds, epochs=10000, alpha=0.01):
     global W1, W2, W3, W4, b1, b2, b3, b4
     h_train_mse = []
     h_val_mse = []
@@ -85,14 +89,14 @@ def train(epochs=10000, alpha=0.01):
     ax_mae.legend()
 
     for e in range(epochs):
-        y_hat, cache = feed_forward(X_tren)
-        loss_mse = cost(y_hat, Y_tren_norm)
+        y_hat, cache = feed_forward(ds.X_tren)
+        loss_mse = cost(y_hat, ds.Y_tren_norm)
         
-        y_val_hat, _ = feed_forward(X_val)
-        val_loss_mse = cost(y_val_hat, Y_val_norm)
+        y_val_hat, _ = feed_forward(ds.X_val)
+        val_loss_mse = cost(y_val_hat, ds.Y_val_norm)
 
-        train_mae = np.mean(np.abs(y_hat - Y_tren_norm)) * y_std
-        val_mae = np.mean(np.abs(y_val_hat - Y_val_norm)) * y_std
+        train_mae = np.mean(np.abs(y_hat - ds.Y_tren_norm)) * ds.y_std
+        val_mae = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
 
         # Zapisywanie historii
         h_train_mse.append(loss_mse)
@@ -100,7 +104,7 @@ def train(epochs=10000, alpha=0.01):
         h_train_mae.append(train_mae)
         h_val_mae.append(val_mae)
 
-        dW1, db1, dW2, db2, dW3, db3, dW4, db4 = backprop(y_hat, Y_tren_norm, cache)
+        dW1, db1, dW2, db2, dW3, db3, dW4, db4 = backprop(y_hat, ds.Y_tren_norm, cache)
 
         W1 -= alpha * dW1
         b1 -= alpha * db1
@@ -129,43 +133,41 @@ def train(epochs=10000, alpha=0.01):
     plt.show()
     return h_train_mse, h_val_mse
 
-def predict(X):
-    y_norm_pred, _ = feed_forward(X)
-    return y_norm_pred * y_std + y_mean
 
-train_history, val_history = train(epochs=25000, alpha=0.001)
-y_test_pred = predict(X_test)
-mae = np.mean(np.abs(y_test_pred - Y_test))
-print(f"\n--- WYNIK KOŃCOWY ---")
-print(f"Średni błąd (MAE): {mae:.2f} $")
+def NN_from_scratch(ds, epochs=10000, alpha=0.001):
+    train_history, val_history = train(ds, epochs, alpha)
+    y_test_pred = predict(ds, ds.X_test)
+    mae = np.mean(np.abs(y_test_pred - ds.Y_test))
+    print(f"\n--- WYNIK KOŃCOWY ---")
+    print(f"Średni błąd (MAE): {mae:.2f} $")
 
-plt.scatter(Y_test, y_test_pred, alpha=0.5)
-plt.plot([Y_test.min(), Y_test.max()], [Y_test.min(), Y_test.max()], 'r--')
-plt.xlabel("Cena prawdziwa")
-plt.ylabel("Cena przewidziana")
-plt.show()
+    plt.scatter(ds.Y_test, y_test_pred, alpha=0.5)
+    plt.plot([ds.Y_test.min(), ds.Y_test.max()], [ds.Y_test.min(), ds.Y_test.max()], 'r--')
+    plt.xlabel("Cena prawdziwa")
+    plt.ylabel("Cena przewidziana")
+    plt.show()
 
-squared_errors = (y_test_pred - Y_test)**2
+    squared_errors = (y_test_pred - ds.Y_test)**2
 
-bins = np.arange(0, Y_test.max() + 200000, 200000)
-bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
+    bins = np.arange(0, ds.Y_test.max() + 200000, 200000)
+    bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
 
-df_error = pd.DataFrame({
-    'Actual_Price': Y_test.flatten(),
-    'Squared_Error': squared_errors.flatten()
-})
+    df_error = pd.DataFrame({
+        'Actual_Price': ds.Y_test.flatten(),
+        'Squared_Error': squared_errors.flatten()
+    })
 
-df_error['Price_Bin'] = pd.cut(df_error['Actual_Price'], bins=bins, labels=bin_labels)
+    df_error['Price_Bin'] = pd.cut(df_error['Actual_Price'], bins=bins, labels=bin_labels)
 
 
-mse_per_bin = df_error.groupby('Price_Bin', observed=False)['Squared_Error'].mean()
+    mse_per_bin = df_error.groupby('Price_Bin', observed=False)['Squared_Error'].mean()
 
-plt.figure(figsize=(12, 6))
-mse_per_bin.plot(kind='bar', color='skyblue', edgecolor='black')
-plt.title("Średni błąd MSE w zależności od przedziału cenowego nieruchomości")
-plt.xlabel("Przedział cenowy domu [$]")
-plt.ylabel("Średni błąd kwadratowy (MSE)")
-plt.xticks(rotation=45)
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.tight_layout()
-plt.show()
+    plt.figure(figsize=(12, 6))
+    mse_per_bin.plot(kind='bar', color='skyblue', edgecolor='black')
+    plt.title("Średni błąd MSE w zależności od przedziału cenowego nieruchomości")
+    plt.xlabel("Przedział cenowy domu [$]")
+    plt.ylabel("Średni błąd kwadratowy (MSE)")
+    plt.xticks(rotation=45)
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
