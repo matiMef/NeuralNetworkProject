@@ -88,7 +88,6 @@ def train(ds, epochs=10000, alpha=0.01) -> list:
         train_mae = np.mean(np.abs(y_hat - ds.Y_tren_norm)) * ds.y_std
         val_mae = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
 
-        # Zapisywanie historii
         h_train_mse.append(loss_mse)
         h_val_mse.append(val_loss_mse)
         h_train_mae.append(train_mae)
@@ -169,7 +168,6 @@ def price_to_error_chart(ds, y_test_pred) -> None:
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
     plt.show()
-
 
 def NN_from_scratch(ds, epochs=10000, alpha=0.001):
     train_history_mse, val_history_mse, train_history_mae, val_history_mae = train(ds, epochs, alpha)

@@ -1,17 +1,8 @@
 import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPRegressor
-from utils import MSE_MAE_summary
+from utils import MSE_MAE_summary, MSE_MAE_error
 
-def MSE_chart(model) -> None:
-    plt.figure(figsize=(8, 5))
-    plt.plot(model.loss_curve_)
-    plt.title("Krzywa uczenia - MLPRegressor (MSE)")
-    plt.xlabel("Iteracje")
-    plt.ylabel("Strata (Loss)")
-    plt.grid(True)
-    plt.show()
-
-def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver) -> float:
+def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver) -> list:
     MLP_regr = MLPRegressor(
         hidden_layer_sizes=(size_H1, size_H2, size_H3), # (128,64,16), (64,32,16), (64,32,8)
         activation=_activation, # logistic, relu
@@ -28,7 +19,6 @@ def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver) -> float:
 
     MLP_regr.fit(ds.X_tren, ds.Y_tren_norm.ravel())
     
-    MSE_chart(MLP_regr)
     MSE_MAE_error(ds, MLP_regr)
     mse_test, mae_test = MSE_MAE_summary(ds, MLP_regr)
-    return mse_test, mae_test
+    return mse_test, mae_test, MLP_regr.loss_curve_, MLP_regr.validation_scores_
