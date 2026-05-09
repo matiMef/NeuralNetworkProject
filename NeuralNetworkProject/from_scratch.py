@@ -68,25 +68,12 @@ def mae_metric(ds, y_hat, y, scale_back=False):
         return np.mean(np.abs((y_hat * ds.y_std + ds.y_mean) - (y * ds.y_std + ds.y_mean)))
     return np.mean(np.abs(y_hat - y))
 
-def train(ds, epochs=10000, alpha=0.01):
+def train(ds, epochs=10000, alpha=0.01) -> list:
     global W1, W2, W3, W4, b1, b2, b3, b4
     h_train_mse = []
     h_val_mse = []
     h_train_mae = []
     h_val_mae = []
-
-    plt.ion()
-    fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
-
-    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
-    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
-    ax_mse.set_title("Koszt (MSE) - Normalizacja")
-    ax_mse.legend()
-
-    l_train_mae, = ax_mae.plot([], [], 'r--', label='Train MAE ($)')
-    l_val_mae, = ax_mae.plot([], [], 'b--', label='Val MAE ($)')
-    ax_mae.set_title("Błąd Średni (MAE) w Dolarach")
-    ax_mae.legend()
 
     for e in range(epochs):
         y_hat, cache = feed_forward(ds.X_tren)
@@ -94,6 +81,9 @@ def train(ds, epochs=10000, alpha=0.01):
         
         y_val_hat, _ = feed_forward(ds.X_val)
         val_loss_mse = cost(y_val_hat, ds.Y_val_norm)
+
+        train_mse = np.mean(np.abs(y_hat - ds.Y_tren_norm)) * ds.y_std
+        val_mse = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
 
         train_mae = np.mean(np.abs(y_hat - ds.Y_tren_norm)) * ds.y_std
         val_mae = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
@@ -115,50 +105,58 @@ def train(ds, epochs=10000, alpha=0.01):
         W4 -= alpha * dW4
         b4 -= alpha * db4
 
-        if e % 100 == 0:
-            l_train_mse.set_data(range(len(h_train_mse)), h_train_mse)
-            l_val_mse.set_data(range(len(h_val_mse)), h_val_mse)
-            ax_mse.relim()
-            ax_mse.autoscale_view()
-
-            l_train_mae.set_data(range(len(h_train_mae)), h_train_mae)
-            l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
-            ax_mae.relim()
-            ax_mae.autoscale_view()
-
-            plt.pause(0.01)
+        if e % 250 == 0:
+            print(f"Epoch {e} | Train MSE: {train_mse:.0f}$ | Val MSE: {val_mse:.0f}$")
             print(f"Epoch {e} | Train MAE: {train_mae:.0f}$ | Val MAE: {val_mae:.0f}$")
 
+    return h_train_mse, h_val_mse, h_train_mae, h_val_mae
+
+def mae_mse_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
+    plt.ion()
+    fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
+
+    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
+    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
+    ax_mse.set_title("Koszt (MSE) - Normalizacja")
+    ax_mse.legend()
+
+    l_train_mae, = ax_mae.plot([], [], 'r--', label='Train MAE ($)')
+    l_val_mae, = ax_mae.plot([], [], 'b--', label='Val MAE ($)')
+    ax_mae.set_title("Błąd Średni (MAE) w Dolarach")
+    ax_mae.legend()
+
+    l_train_mse.set_data(range(len(h_train_mse)), h_train_mse)
+    l_val_mse.set_data(range(len(h_val_mse)), h_val_mse)
+    ax_mse.relim()
+    ax_mse.autoscale_view()
+
+    l_train_mae.set_data(range(len(h_train_mae)), h_train_mae)
+    l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
+    ax_mae.relim()
+    ax_mae.autoscale_view()
     plt.ioff()
     plt.show()
-    return h_train_mse, h_val_mse
 
-
-def NN_from_scratch(ds, epochs=10000, alpha=0.001):
-    train_history, val_history = train(ds, epochs, alpha)
-    y_test_pred = predict(ds, ds.X_test)
+def eval_chart(ds, y_test_pred) -> None:
     mae = np.mean(np.abs(y_test_pred - ds.Y_test))
     print(f"\n--- WYNIK KOŃCOWY ---")
     print(f"Średni błąd (MAE): {mae:.2f} $")
-
     plt.scatter(ds.Y_test, y_test_pred, alpha=0.5)
     plt.plot([ds.Y_test.min(), ds.Y_test.max()], [ds.Y_test.min(), ds.Y_test.max()], 'r--')
     plt.xlabel("Cena prawdziwa")
     plt.ylabel("Cena przewidziana")
     plt.show()
 
+def price_to_error_chart(ds, y_test_pred) -> None:
     squared_errors = (y_test_pred - ds.Y_test)**2
-
     bins = np.arange(0, ds.Y_test.max() + 200000, 200000)
     bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
-
     df_error = pd.DataFrame({
         'Actual_Price': ds.Y_test.flatten(),
         'Squared_Error': squared_errors.flatten()
     })
 
     df_error['Price_Bin'] = pd.cut(df_error['Actual_Price'], bins=bins, labels=bin_labels)
-
 
     mse_per_bin = df_error.groupby('Price_Bin', observed=False)['Squared_Error'].mean()
 
@@ -171,3 +169,12 @@ def NN_from_scratch(ds, epochs=10000, alpha=0.001):
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
     plt.show()
+
+
+def NN_from_scratch(ds, epochs=10000, alpha=0.001):
+    train_history_mse, val_history_mse, train_history_mae, val_history_mae = train(ds, epochs, alpha)
+    y_test_pred = predict(ds, ds.X_test)
+
+    mae_mse_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae)
+    eval_chart(ds, y_test_pred)
+    price_to_error_chart(ds, y_test_pred)

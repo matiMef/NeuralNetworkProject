@@ -16,9 +16,10 @@ def scikit_MLP_comparison(scikit_results) -> None:
 def main() -> None:
     ds = Dataset('kc_house_data.csv')
 
-    # NN_from_scratch(ds, 10000, 0.001)
+    NN_from_scratch(ds, 1000, 0.001)
 
-    # scikit_results = []
+    # scikit_mse_results = []
+    # scikit_mae_results = []
     # scikit_tests = [
     #     [128, 64, 32, 'logistic', 'adam'],
     #     [64, 32, 16, 'logistic', 'adam'],
@@ -36,12 +37,13 @@ def main() -> None:
     # ]
 
     # for test in scikit_tests:
-    #     result = MLP_NN(ds, test[0], test[1], test[2], test[3], test[4])
-    #     scikit_results.append(result)
+    #     mse_result, mae_result = MLP_NN(ds, test[0], test[1], test[2], test[3], test[4])
+    #     scikit_mse_results.append(mae_result)
+    #     scikit_mae_results.append(mae_result)
     
     # scikit_MLP_comparison(scikit_results)
 
-    # linear_regression(ds)
+    linear_regression(ds)
     random_forest(ds)
 
 if __name__ == "__main__":
