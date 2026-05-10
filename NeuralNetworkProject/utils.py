@@ -19,7 +19,7 @@ def MSE_MAE_summary(ds, model) -> list:
     print(f"Błąd MAE: {mae_test:.2f} $")
     return mse_test, mae_test
 
-def scikit_MLP_NN_MSE_comparison(scikit_results) -> None:
+def MSE_comparison(scikit_results) -> None:
     best_result = float('inf')
     best_result_idx = 999
     for result in range (len(scikit_results)):
@@ -28,7 +28,7 @@ def scikit_MLP_NN_MSE_comparison(scikit_results) -> None:
             best_result_idx = result
     print('Test: ', best_result_idx, 'Min MAE: ', best_result)
 
-def scikit_MLP_NN_MAE_comparison(scikit_results) -> None:
+def MAE_comparison(scikit_results) -> None:
     best_result = float('inf')
     best_result_idx = 999
     for result in range (len(scikit_results)):

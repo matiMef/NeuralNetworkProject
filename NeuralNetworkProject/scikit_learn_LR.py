@@ -12,9 +12,10 @@ def show_features_importance(model) -> None:
     print("\nISTOTNOŚĆ CECH (REGRESJA LINIOWA)")
     print(coefs.sort_values(ascending=False))
 
-def linear_regression(ds) -> None:
+def linear_regression(ds) -> list:
     line_regr = LinearRegression()
     line_regr.fit(ds.X_tren, ds.Y_tren_norm.ravel())
     
-    MSE_MAE_summary(ds, line_regr)
+    mse_test, mae_test = MSE_MAE_summary(ds, line_regr)
     show_features_importance(line_regr)
+    return mse_test, mae_test 
