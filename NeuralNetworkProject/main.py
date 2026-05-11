@@ -3,31 +3,7 @@ from from_scratch import NN_from_scratch
 from scikit_learn_NN import MLP_NN
 from scikit_learn_LR import linear_regression
 from scikit_learn_RF import random_forest
-from utils import MSE_comparison, MAE_comparison, MLP_NN_traning_MSE_chart, MLP_NN_traning_R2_chart
-
-def all_tests_summary(all_tests) -> None:
-    best_result_mse = float('inf')
-    best_result_mae = float('inf')
-    best_result_mse_idx = 999
-    best_result_mae_idx = 999
-    
-    for result in range (len(all_tests)):
-        result_dict = all_tests[result]
-        mse = result_dict.get("mse")
-        if mse < best_result_mse:
-            best_result_mse = mse
-            best_result_mse_idx = result
-    
-    for result in range (len(all_tests)):
-        result_dict = all_tests[result]
-        mae= result_dict.get("mae")
-        if mse < best_result_mae :
-            best_result_mae  = mae
-            best_result_mae_idx  = result
-    
-    print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ DLA WSZYSTKICH TESTÓW (TEST SET) ---")
-    print('Test: ', best_result_mse_idx, 'Min MSE: ', best_result_mse)
-    print('Test: ', best_result_mae_idx , 'Min MAE: ', best_result_mae)
+from utils import MSE_comparison, MAE_comparison, MLP_NN_traning_MSE_chart, MLP_NN_traning_R2_chart, all_tests_summary
 
 def main() -> None:
     ds = Dataset('kc_house_data.csv')
@@ -50,7 +26,7 @@ def main() -> None:
         [128, 64, 32, 'logistic', 'adam', 10000, 0.0001],
         [64, 32, 16, 'logistic', 'adam', 10000, 0.0001],
         [64, 32, 8, 'logistic', 'adam', 10000, 0.0001],
-        [128, 64, 32, 'relu', 'adam', 10000, 0.0001],
+        # [128, 64, 32, 'relu', 'adam', 10000, 0.0001],
         [64, 32, 16, 'relu', 'adam', 10000, 0.0001],
         [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
         # [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
@@ -85,6 +61,7 @@ def main() -> None:
         }
         all_tests.append(current_result)
     
+    print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ DLA TESTÓW SIECI NEURONOWYCH (TEST SET) ---")
     MSE_comparison(scikit_NN_mse_results)
     MAE_comparison(scikit_NN_mae_results)
     MLP_NN_traning_MSE_chart(scikit_NN_tests, loss_curves)
@@ -119,11 +96,11 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 
-# Dodać do modelu dane walidacyjne
 # Dodać funckje dla walidacji
 # Dodać wykresy słupkowe dla testu i walidacji dla mse i dla mae
-# Dodać wykresy dla ewaluacji
+# Dodać wykresy dla ewaluacji i walidacji
 # Poprawić funckje sieci from scratch, żeby przyjmowała argumenty
+# Dodać wykresy dla RF I LR
 # Dodać benchmarki czasowe
 # Dodać wykresy czasów
 # Dodać model Pytroch

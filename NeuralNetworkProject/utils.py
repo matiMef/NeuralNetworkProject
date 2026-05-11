@@ -1,15 +1,17 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-def MSE_MAE_error(ds, model) -> None:
+def MSE_MAE_val(ds, model) -> None:
     y_val_pred_norm = model.predict(ds.X_val)
     mse_val = mean_squared_error(ds.Y_val_norm, y_val_pred_norm)
     y_val_pred_dollars = y_val_pred_norm * ds.y_std + ds.y_mean
     mae_val = mean_absolute_error(ds.Y_val, y_val_pred_dollars)
+    print(f"\n--- WYNIKI WALIDACJI (VAL SET) ---")
     print(f"Błąd MSE (znormalizowany): {mse_val:.6f}")
     print(f"Błąd MAE (w dolarach): {mae_val:.2f} $")
+    return mse_val, mae_val
 
-def MSE_MAE_summary(ds, model) -> list:
+def MSE_MAE_test(ds, model) -> list:
     y_test_pred_norm = model.predict(ds.X_test)
     y_test_pred_dollars = y_test_pred_norm * ds.y_std + ds.y_mean
     mae_test = mean_absolute_error(ds.Y_test, y_test_pred_dollars)
@@ -26,7 +28,7 @@ def MSE_comparison(scikit_results) -> None:
         if scikit_results[result] < best_result:
             best_result = scikit_results[result]
             best_result_idx = result
-    print('Test: ', best_result_idx, 'Min MAE: ', best_result)
+    print('Test:', best_result_idx, 'Min MAE:', best_result)
 
 def MAE_comparison(scikit_results) -> None:
     best_result = float('inf')
@@ -35,7 +37,31 @@ def MAE_comparison(scikit_results) -> None:
         if scikit_results[result] < best_result:
             best_result = scikit_results[result]
             best_result_idx = result
-    print('Test: ', best_result_idx, 'Min MSE: ', best_result)
+    print('Test:', best_result_idx, 'Min MSE:', best_result)
+
+def all_tests_summary(all_tests) -> None:
+    best_result_mse = float('inf')
+    best_result_mae = float('inf')
+    best_result_mse_idx = 999
+    best_result_mae_idx = 999
+    
+    for result in range (len(all_tests)):
+        result_dict = all_tests[result]
+        mse = result_dict.get("mse")
+        if mse < best_result_mse:
+            best_result_mse = mse
+            best_result_mse_idx = result
+    
+    for result in range (len(all_tests)):
+        result_dict = all_tests[result]
+        mae= result_dict.get("mae")
+        if mse < best_result_mae :
+            best_result_mae  = mae
+            best_result_mae_idx  = result
+    
+    print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ DLA WSZYSTKICH TESTÓW (TEST SET) ---")
+    print('Test:', best_result_mse_idx, 'Min MSE:', best_result_mse)
+    print('Test:', best_result_mae_idx , 'Min MAE:', best_result_mae)
 
 def MLP_NN_traning_MSE_chart(scikit_tests, loss_curves) -> None:
     plt.figure(figsize=(12, 7))

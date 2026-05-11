@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPRegressor
-from utils import MSE_MAE_summary, MSE_MAE_error
+from utils import MSE_MAE_val, MSE_MAE_test
 
 def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver, _max_iter, _alpha) -> list:
     MLP_regr = MLPRegressor(
@@ -19,6 +19,6 @@ def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver, _max_iter, _alph
 
     MLP_regr.fit(ds.X_tren, ds.Y_tren_norm.ravel())
     
-    MSE_MAE_error(ds, MLP_regr)
-    mse_test, mae_test = MSE_MAE_summary(ds, MLP_regr)
+    mse_val, mae_val = MSE_MAE_val(ds, MLP_regr)
+    mse_test, mae_test = MSE_MAE_test(ds, MLP_regr)
     return mse_test, mae_test, MLP_regr.loss_curve_, MLP_regr.validation_scores_
