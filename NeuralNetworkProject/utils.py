@@ -1,15 +1,7 @@
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-
-def MSE_MAE_val(ds, model) -> None:
-    y_val_pred_norm = model.predict(ds.X_val)
-    mse_val = mean_squared_error(ds.Y_val_norm, y_val_pred_norm)
-    y_val_pred_dollars = y_val_pred_norm * ds.y_std + ds.y_mean
-    mae_val = mean_absolute_error(ds.Y_val, y_val_pred_dollars)
-    print(f"\n--- WYNIKI WALIDACJI (VAL SET) ---")
-    print(f"Błąd MSE (znormalizowany): {mse_val:.6f}")
-    print(f"Błąd MAE (w dolarach): {mae_val:.2f} $")
-    return mse_val, mae_val
 
 def MSE_MAE_test(ds, model) -> list:
     y_test_pred_norm = model.predict(ds.X_test)
@@ -96,5 +88,64 @@ def MLP_NN_traning_R2_chart(scikit_tests, validation_scores) -> None:
         plt.text(0.5, 0.5, "Brak danych walidacji (early_stopping=False)", 
                  ha='center', va='center')
         
+    plt.tight_layout()
+    plt.show()
+
+def mae_mse_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
+    plt.ion()
+    fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
+
+    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
+    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
+    ax_mse.set_title("Koszt (MSE) - Normalizacja")
+    ax_mse.legend()
+
+    l_train_mae, = ax_mae.plot([], [], 'r--', label='Train MAE ($)')
+    l_val_mae, = ax_mae.plot([], [], 'b--', label='Val MAE ($)')
+    ax_mae.set_title("Błąd Średni (MAE) w Dolarach")
+    ax_mae.legend()
+
+    l_train_mse.set_data(range(len(h_train_mse)), h_train_mse)
+    l_val_mse.set_data(range(len(h_val_mse)), h_val_mse)
+    ax_mse.relim()
+    ax_mse.autoscale_view()
+
+    l_train_mae.set_data(range(len(h_train_mae)), h_train_mae)
+    l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
+    ax_mae.relim()
+    ax_mae.autoscale_view()
+    plt.ioff()
+    plt.show()
+
+def eval_chart(ds, y_test_pred) -> None:
+    mae = np.mean(np.abs(y_test_pred - ds.Y_test))
+    print(f"\n--- WYNIK KOŃCOWY ---")
+    print(f"Średni błąd (MAE): {mae:.2f} $")
+    plt.scatter(ds.Y_test, y_test_pred, alpha=0.5)
+    plt.plot([ds.Y_test.min(), ds.Y_test.max()], [ds.Y_test.min(), ds.Y_test.max()], 'r--')
+    plt.xlabel("Cena prawdziwa")
+    plt.ylabel("Cena przewidziana")
+    plt.show()
+
+def price_to_error_chart(ds, y_test_pred) -> None:
+    squared_errors = (y_test_pred - ds.Y_test)**2
+    bins = np.arange(0, ds.Y_test.max() + 200000, 200000)
+    bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
+    df_error = pd.DataFrame({
+        'Actual_Price': ds.Y_test.flatten(),
+        'Squared_Error': squared_errors.flatten()
+    })
+
+    df_error['Price_Bin'] = pd.cut(df_error['Actual_Price'], bins=bins, labels=bin_labels)
+
+    mse_per_bin = df_error.groupby('Price_Bin', observed=False)['Squared_Error'].mean()
+
+    plt.figure(figsize=(12, 6))
+    mse_per_bin.plot(kind='bar', color='skyblue', edgecolor='black')
+    plt.title("Średni błąd MSE w zależności od przedziału cenowego nieruchomości")
+    plt.xlabel("Przedział cenowy domu [$]")
+    plt.ylabel("Średni błąd kwadratowy (MSE)")
+    plt.xticks(rotation=45)
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
     plt.show()

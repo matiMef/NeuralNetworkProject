@@ -1,2 +1,8 @@
 *.pyc
 *.pyc
+*.pyc
+NeuralNetworkProject/__pycache__/from_scratch.cpython-313.pyc
+NeuralNetworkProject/__pycache__/scikit_learn_LR.cpython-313.pyc
+NeuralNetworkProject/__pycache__/scikit_learn_NN.cpython-313.pyc
+NeuralNetworkProject/__pycache__/scikit_learn_RF.cpython-313.pyc
+NeuralNetworkProject/__pycache__/utils.cpython-313.pyc

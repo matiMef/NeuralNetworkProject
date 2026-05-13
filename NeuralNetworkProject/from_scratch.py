@@ -1,15 +1,18 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+from utils import mae_mse_chart, eval_chart, price_to_error_chart
 
-W1 = np.random.randn(9, 128) * np.sqrt(2./9)
-b1 = np.zeros((1, 128))
-W2 = np.random.randn(128, 32) * np.sqrt(2./128)
-b2 = np.zeros((1, 32))
-W3 = np.random.randn(32, 16) * np.sqrt(2./32) 
-b3 = np.zeros((1, 16))
-W4 = np.random.randn(16, 1) * np.sqrt(2./16)  
-b4 = np.zeros((1, 1))
+W1 = W2 = W3 = W4 = b1 = b2 = b3 = b4 = None
+
+def initialize_layers(H1_size, H2_size, H3_size):
+    global W1, W2, W3, W4, b1, b2, b3, b4
+    W1 = np.random.randn(9, H1_size ) * np.sqrt(2./9)
+    b1 = np.zeros((1, H1_size ))
+    W2 = np.random.randn(H1_size , H2_size) * np.sqrt(2./H1_size)
+    b2 = np.zeros((1, H2_size))
+    W3 = np.random.randn(H2_size, H3_size) * np.sqrt(2./H2_size) 
+    b3 = np.zeros((1, H3_size))
+    W4 = np.random.randn(H3_size, 1) * np.sqrt(2./H3_size)  
+    b4 = np.zeros((1, 1))
 
 def relu(Z):
     return np.maximum(0, Z)
@@ -110,69 +113,13 @@ def train(ds, epochs=10000, alpha=0.01) -> list:
 
     return h_train_mse, h_val_mse, h_train_mae, h_val_mae
 
-def mae_mse_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
-    plt.ion()
-    fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
-
-    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
-    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
-    ax_mse.set_title("Koszt (MSE) - Normalizacja")
-    ax_mse.legend()
-
-    l_train_mae, = ax_mae.plot([], [], 'r--', label='Train MAE ($)')
-    l_val_mae, = ax_mae.plot([], [], 'b--', label='Val MAE ($)')
-    ax_mae.set_title("Błąd Średni (MAE) w Dolarach")
-    ax_mae.legend()
-
-    l_train_mse.set_data(range(len(h_train_mse)), h_train_mse)
-    l_val_mse.set_data(range(len(h_val_mse)), h_val_mse)
-    ax_mse.relim()
-    ax_mse.autoscale_view()
-
-    l_train_mae.set_data(range(len(h_train_mae)), h_train_mae)
-    l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
-    ax_mae.relim()
-    ax_mae.autoscale_view()
-    plt.ioff()
-    plt.show()
-
-def eval_chart(ds, y_test_pred) -> None:
-    mae = np.mean(np.abs(y_test_pred - ds.Y_test))
-    print(f"\n--- WYNIK KOŃCOWY ---")
-    print(f"Średni błąd (MAE): {mae:.2f} $")
-    plt.scatter(ds.Y_test, y_test_pred, alpha=0.5)
-    plt.plot([ds.Y_test.min(), ds.Y_test.max()], [ds.Y_test.min(), ds.Y_test.max()], 'r--')
-    plt.xlabel("Cena prawdziwa")
-    plt.ylabel("Cena przewidziana")
-    plt.show()
-
-def price_to_error_chart(ds, y_test_pred) -> None:
-    squared_errors = (y_test_pred - ds.Y_test)**2
-    bins = np.arange(0, ds.Y_test.max() + 200000, 200000)
-    bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
-    df_error = pd.DataFrame({
-        'Actual_Price': ds.Y_test.flatten(),
-        'Squared_Error': squared_errors.flatten()
-    })
-
-    df_error['Price_Bin'] = pd.cut(df_error['Actual_Price'], bins=bins, labels=bin_labels)
-
-    mse_per_bin = df_error.groupby('Price_Bin', observed=False)['Squared_Error'].mean()
-
-    plt.figure(figsize=(12, 6))
-    mse_per_bin.plot(kind='bar', color='skyblue', edgecolor='black')
-    plt.title("Średni błąd MSE w zależności od przedziału cenowego nieruchomości")
-    plt.xlabel("Przedział cenowy domu [$]")
-    plt.ylabel("Średni błąd kwadratowy (MSE)")
-    plt.xticks(rotation=45)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.show()
-
-def NN_from_scratch(ds, epochs=10000, alpha=0.001):
+def NN_from_scratch(ds, H1_size=64, H2_size=32, H3_size=16, epochs=10000, alpha=0.001):
+    initialize_layers(H1_size, H2_size, H3_size)
     train_history_mse, val_history_mse, train_history_mae, val_history_mae = train(ds, epochs, alpha)
     y_test_pred = predict(ds, ds.X_test)
 
     mae_mse_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae)
     eval_chart(ds, y_test_pred)
     price_to_error_chart(ds, y_test_pred)
+
+
