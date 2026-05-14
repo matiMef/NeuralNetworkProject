@@ -36,4 +36,3 @@ def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver, _max_iter, _alph
     evaluation_chart(ds, y_pred_mlp_dollars)
     
     return mse_test, mae_test, MLP_regr.loss_curve_, MLP_regr.validation_scores_
-

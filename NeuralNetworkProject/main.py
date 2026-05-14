@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from utils.dataset import Dataset
-from utils.utils import MSE_comparison, MAE_comparison, training_MSE_chart, training_R2_chart, tests_summary, summary_chart
+from utils.utils import training_MSE_chart, training_R2_chart, tests_summary, summary_chart
 from algorithms.from_scratch import NN_from_scratch
 from algorithms.scikit_learn_NN import MLP_NN
 from algorithms.scikit_learn_LR import linear_regression
@@ -60,8 +60,6 @@ def main() -> None:
         all_tests.append(current_result)
     
     print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ DLA TESTÓW SIECI NEURONOWYCH (TEST SET) ---")
-    MSE_comparison(scikit_NN_mse_results)
-    MAE_comparison(scikit_NN_mae_results)
     training_MSE_chart(scikit_NN_tests, loss_curves)
     training_R2_chart(scikit_NN_tests, validation_scores)
     
@@ -85,9 +83,6 @@ def main() -> None:
         "mae": mae_result,
         }
         all_tests.append(current_result)
-
-    MSE_comparison(scikit_RF_mse_results)
-    MAE_comparison(scikit_RF_mae_results)
 
     tests_summary(all_tests)
     summary_chart(all_tests, "mse")

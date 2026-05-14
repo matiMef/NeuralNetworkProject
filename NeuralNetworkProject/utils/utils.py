@@ -13,37 +13,23 @@ def mse_mae_test(ds, model) -> list:
     print(f"Błąd MAE: {mae_test:.2f} $")
     return mse_test, mae_test
 
-def MSE_comparison(scikit_results) -> None:
-    best_result = float('inf')
-    for result in range (len(scikit_results)):
-        if scikit_results[result] < best_result:
-            best_result = scikit_results[result]
-
-def MAE_comparison(scikit_results) -> None:
-    best_result = float('inf')
-    for result in range (len(scikit_results)):
-        if scikit_results[result] < best_result:
-            best_result = scikit_results[result]
-
 def tests_summary(all_tests) -> None:
     best_result_mse = float('inf')
     best_result_mae = float('inf')
     best_result_mse_idx = 999
     best_result_mae_idx = 999
     
-    for result in range (len(all_tests)):
-        result_dict = all_tests[result]
+    for i, result_dict in enumerate(all_tests):
         mse = result_dict.get("mse")
-        if mse < best_result_mse:
-            best_result_mse = mse
-            best_result_mse_idx = result
+        mae = result_dict.get("mae")
     
-    for result in range (len(all_tests)):
-        result_dict = all_tests[result]
-        mae= result_dict.get("mae")
-        if mse < best_result_mae :
-            best_result_mae  = mae
-            best_result_mae_idx  = result
+    if mse < best_result_mse:
+        best_result_mse = mse
+        best_result_mse_idx = i
+        
+    if mae < best_result_mae:
+        best_result_mae = mae
+        best_result_mae_idx = i
     
     print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ DLA WSZYSTKICH TESTÓW (TEST SET) ---")
     print('Test:', best_result_mse_idx, 'Min MSE:', best_result_mse)
@@ -144,10 +130,9 @@ def summary_chart(all_tests, option="mse") -> None:
     categories = []
     values = []
     
-    for result in range(len(all_tests)):
-        result_dict = all_tests[result]
-        categories.append(result_dict.get("params") + f" {result}")
-        values.append(result_dict.get("mse"))
+    for i, result_dict in enumerate(all_tests):
+        categories.append(result_dict.get("params") + f" {i}")
+        values.append(result_dict.get(option))
     
     colors = plt.cm.tab10(np.linspace(0, 1, len(categories)))
     
@@ -180,15 +165,9 @@ def show_features_importance(model, option="Regresja Liniowa") -> None:
     plt.show()
 
 def mse_chart(train_mse, val_mse) -> None:
-    fig, (ax_mse) = plt.subplots(1, 1, figsize=(16, 6))
-
-    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
-    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
-    ax_mse.set_title("Koszt (MSE) - Normalizacja")
-    ax_mse.legend()
-
-    l_train_mse.set_data(range(len(train_mse)), train_mse)
-    l_val_mse.set_data(range(len(val_mse)),  val_mse)
-    ax_mse.relim()
-    ax_mse.autoscale_view()
+    plt.figure(figsize=(16, 6))
+    plt.plot(train_mse, 'r-', label='Train MSE')
+    plt.plot(val_mse, 'b-', label='Val MSE')
+    plt.title("Koszt (MSE) - Normalizacja")
+    plt.legend()
     plt.show()
