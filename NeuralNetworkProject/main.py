@@ -8,18 +8,17 @@ from algorithms.scikit_learn_RF import random_forest
 
 def main() -> None:
     ds = Dataset('utils/kc_house_data.csv')
-    scikit_NN_mse_results = []
-    scikit_NN_mae_results = []
     loss_curves = []
     validation_scores = []
-    scikit_LR_mse_results = []
-    scikit_LR_mae_results = []
-    scikit_RF_mse_results = []
-    scikit_RF_mae_results = []
     all_tests = []
 
-     # NN_from_scratch(ds, 64, 32, 16, 1000, 0.001)
-    
+    from_scratch_tests = [
+        [128, 64, 16, 1000, 0.001],
+        [128, 32, 16, 1000, 0.001],
+        [64, 32, 16, 1000, 0.001],
+        [64, 32, 8, 1000, 0.001]
+    ]
+
     scikit_NN_tests = [
         [128, 64, 32, 'logistic', 'adam', 10000, 0.0001],
         [64, 32, 16, 'logistic', 'adam', 10000, 0.0001],
@@ -37,25 +36,32 @@ def main() -> None:
     ]
 
     scikit_RF_tests = [
-        # [500, 30],
-        # [425, 25],
-        # [250, 20],
-        # [200, 20],
-        # [400, 25],
-        # [300, 30]
+        [500, 30],
+        [425, 25],
+        [250, 20],
+        [200, 20],
+        [400, 25],
+        [300, 30]
     ]
+
+    for test in from_scratch_tests:
+        mse_result, mae_result = NN_from_scratch(ds, test[0], test[1], test[2], test[3], test[4])
+        current_result = {
+            "params": f"Layers Size: {test[0]}, {test[1]}, {test[2]}",
+            "mse": mse_result,
+            "mae": mae_result
+        }
+        all_tests.append(current_result)
 
     for test in scikit_NN_tests:
         mse_result, mae_result, loss_curve, validation_score = MLP_NN(ds, test[0], test[1], test[2], test[3], test[4], test[5], test[6])
-        scikit_NN_mse_results.append(mse_result)
-        scikit_NN_mae_results.append(mae_result)
         loss_curves.append(loss_curve)
         validation_scores.append(validation_score)
 
         current_result = {
-        "params": f"Activ: {test[3]}, Solver: {test[4]}",
-        "mse": mse_result,
-        "mae": mae_result
+            "params": f"Activ: {test[3]}, Solver: {test[4]}",
+            "mse": mse_result,
+            "mae": mae_result
         }
         all_tests.append(current_result)
     
@@ -64,8 +70,6 @@ def main() -> None:
     training_R2_chart(scikit_NN_tests, validation_scores)
     
     mse_result, mae_result = linear_regression(ds)
-    scikit_LR_mse_results.append(mse_result)
-    scikit_LR_mae_results.append(mae_result)
     current_result = {
         "params": f"Linear Regression",
         "mse": mse_result,
@@ -75,12 +79,10 @@ def main() -> None:
     
     for test in scikit_RF_tests:
         mse_result, mae_result = random_forest(ds, test[0], test[1])
-        scikit_RF_mse_results.append(mse_result)
-        scikit_RF_mae_results.append(mae_result)
         current_result = {
-        "params": f"N est: {test[0]}, Max depth: {test[1]}",
-        "mse": mse_result,
-        "mae": mae_result,
+            "params": f"N est: {test[0]}, Max depth: {test[1]}",
+            "mse": mse_result,
+            "mae": mae_result,
         }
         all_tests.append(current_result)
 

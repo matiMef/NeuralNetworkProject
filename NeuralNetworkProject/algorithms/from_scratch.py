@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from utils.utils import loss_chart, evaluation_chart, category_price_chart
 
 W1 = W2 = W3 = W4 = b1 = b2 = b3 = b4 = None
@@ -14,21 +15,21 @@ def initialize_layers(H1_size, H2_size, H3_size) -> None:
     W4 = np.random.randn(H3_size, 1) * np.sqrt(2./H3_size)  
     b4 = np.zeros((1, 1))
 
-def relu(Z):
+def relu(Z) -> np.ndarray:
     return np.maximum(0, Z)
 
-def relu_derivative(Z):
+def relu_derivative(Z) -> np.ndarray:
     return (Z > 0).astype(float)
 
-def cost(y_hat, y):
+def cost(y_hat, y) -> float:
     m = y.shape[0]
     return (1 / (2 * m)) * np.sum((y_hat - y)**2)
 
-def predict(ds, X):
+def predict(ds, X) -> np.ndarray:
     y_norm_pred, _ = feed_forward(X)
     return y_norm_pred * ds.y_std + ds.y_mean
 
-def feed_forward(A0):
+def feed_forward(A0) -> tuple:
     Z1 = A0 @ W1 + b1 
     A1 = relu(Z1)
     Z2 = A1 @ W2 + b2
@@ -39,7 +40,7 @@ def feed_forward(A0):
     cache = {"A0": A0, "Z1": Z1, "A1": A1, "Z2": Z2, "A2": A2, "Z3": Z3, "A3": A3}
     return Z4, cache
 
-def backprop(y_hat, Y, cache):
+def backprop(y_hat, Y, cache) -> tuple:
     global W1, W2, W3, W4, b1, b2, b3, b4
     m = Y.shape[0]
     A0, A1, A2, A3 = cache["A0"], cache["A1"], cache["A2"], cache["A3"]
@@ -66,12 +67,12 @@ def backprop(y_hat, Y, cache):
 
     return dW1, db1, dW2, db2, dW3, db3, dW4, db4
 
-def mae_metric(ds, y_hat, y, scale_back=False):
+def mae_metric(ds, y_hat, y, scale_back=False) -> float:
     if scale_back:
         return np.mean(np.abs((y_hat * ds.y_std + ds.y_mean) - (y * ds.y_std + ds.y_mean)))
     return np.mean(np.abs(y_hat - y))
 
-def train(ds, epochs=10000, alpha=0.01) -> list:
+def train(ds, epochs=10000, alpha=0.01) -> tuple:
     global W1, W2, W3, W4, b1, b2, b3, b4
     h_train_mse = []
     h_val_mse = []
@@ -113,11 +114,23 @@ def train(ds, epochs=10000, alpha=0.01) -> list:
 
     return h_train_mse, h_val_mse, h_train_mae, h_val_mae
 
-def NN_from_scratch(ds, H1_size=64, H2_size=32, H3_size=16, epochs=10000, alpha=0.001):
+def mse_mae_test(ds) -> tuple:
+    y_test_pred_dollars = predict(ds, ds.X_test)
+    mae_test = mean_absolute_error(ds.Y_test, y_test_pred_dollars)
+    y_test_pred_norm = (y_test_pred_dollars - ds.y_mean) / ds.y_std
+    mse_test = mean_squared_error(ds.Y_test_norm, y_test_pred_norm)
+    print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ (TEST SET) ---")
+    print(f"Błąd MSE (znormalizowany): {mse_test:.6f}")
+    print(f"Błąd MAE: {mae_test:.2f} $")
+    return mse_test, mae_test
+
+def NN_from_scratch(ds, H1_size=64, H2_size=32, H3_size=16, epochs=10000, alpha=0.001) -> tuple:
     initialize_layers(H1_size, H2_size, H3_size)
     train_history_mse, val_history_mse, train_history_mae, val_history_mae = train(ds, epochs, alpha)
     y_test_pred = predict(ds, ds.X_test)
-
+    
+    mse_test, mae_test = mse_mae_test(ds)
     loss_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae)
     evaluation_chart(ds, y_test_pred)
     category_price_chart(ds, y_test_pred)
+    return mse_test, mae_test

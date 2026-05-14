@@ -2,12 +2,12 @@ import numpy as np
 from sklearn.neural_network import MLPRegressor
 from utils.utils import  mse_mae_test, evaluation_chart, mse_chart
 
-def convert_r2_to_mse(r2_scores, y_val_norm):
+def convert_r2_to_mse(r2_scores, y_val_norm) -> list:
     variance = np.var(y_val_norm)
     mse_scores = [(1 - r2) * variance for r2 in r2_scores]
     return mse_scores
 
-def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver, _max_iter, _alpha) -> list:
+def MLP_NN(ds, size_H1, size_H2, size_H3, _activation, _solver, _max_iter, _alpha) -> tuple:
     X_combined = np.vstack((ds.X_tren, ds.X_val))
     Y_combined = np.vstack((ds.Y_tren_norm, ds.Y_val_norm))
 

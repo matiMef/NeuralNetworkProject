@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestRegressor
 from utils.utils import mse_mae_test, evaluation_chart, show_features_importance
 
-def random_forest(ds, _n_estimators, _max_depth) -> list:
+def random_forest(ds, _n_estimators, _max_depth) -> tuple:
     rf_regr = RandomForestRegressor(
         n_estimators=_n_estimators, 
         max_depth=_max_depth, 

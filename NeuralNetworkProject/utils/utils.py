@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-def mse_mae_test(ds, model) -> list:
+def mse_mae_test(ds, model) -> tuple:
     y_test_pred_norm = model.predict(ds.X_test)
     y_test_pred_dollars = y_test_pred_norm * ds.y_std + ds.y_mean
     mae_test = mean_absolute_error(ds.Y_test, y_test_pred_dollars)
@@ -74,25 +74,21 @@ def training_R2_chart(scikit_tests, validation_scores) -> None:
 def loss_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
     fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
 
-    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
-    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
+    ax_mse.plot(h_train_mse, 'r-', label='Train MSE')
+    ax_mse.plot(h_val_mse, 'b-', label='Val MSE')
     ax_mse.set_title("Koszt (MSE) - Normalizacja")
+    ax_mse.set_xlabel("Epoki")
+    ax_mse.grid(True, linestyle='--', alpha=0.7)
     ax_mse.legend()
 
-    l_train_mae, = ax_mae.plot([], [], 'r--', label='Train MAE ($)')
-    l_val_mae, = ax_mae.plot([], [], 'b--', label='Val MAE ($)')
+    ax_mae.plot(h_train_mae, 'r--', label='Train MAE ($)')
+    ax_mae.plot(h_val_mae, 'b--', label='Val MAE ($)')
     ax_mae.set_title("Błąd Średni (MAE) w Dolarach")
+    ax_mae.set_xlabel("Epoki")
+    ax_mae.grid(True, linestyle='--', alpha=0.7)
     ax_mae.legend()
 
-    l_train_mse.set_data(range(len(h_train_mse)), h_train_mse)
-    l_val_mse.set_data(range(len(h_val_mse)), h_val_mse)
-    ax_mse.relim()
-    ax_mse.autoscale_view()
-
-    l_train_mae.set_data(range(len(h_train_mae)), h_train_mae)
-    l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
-    ax_mae.relim()
-    ax_mae.autoscale_view()
+    plt.tight_layout()
     plt.show()
 
 def evaluation_chart(ds, y_test_pred) -> None:
