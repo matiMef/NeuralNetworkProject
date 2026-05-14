@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from utils import mse_mae_test, evaluation_chart, show_features_importance
+from utils.utils import mse_mae_test, evaluation_chart, show_features_importance
 
 def random_forest(ds, _n_estimators, _max_depth) -> list:
     rf_regr = RandomForestRegressor(

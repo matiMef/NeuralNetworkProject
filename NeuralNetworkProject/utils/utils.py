@@ -143,19 +143,19 @@ def category_price_chart(ds, y_test_pred) -> None:
 def summary_chart(all_tests, option="mse") -> None:
     categories = []
     values = []
+    
+    for result in range(len(all_tests)):
+        result_dict = all_tests[result]
+        categories.append(result_dict.get("params") + f" {result}")
+        values.append(result_dict.get("mse"))
+    
     colors = plt.cm.tab10(np.linspace(0, 1, len(categories)))
-
-    for result_dict in all_tests:
-        idx = 0
-        categories.append(result_dict.get("params" + f"{idx}"))
-        values.append(result_dict.get(option))
-        idx+=1
     
     plt.figure(figsize=(12, 6))
     plt.bar(categories, values, color=colors)
     plt.title(f'Porównanie modeli za pomocą {option.upper()}')
     plt.xlabel('Parametry modelu')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=30, fontsize="8")
     plt.ylabel(f'Metryka: {option.upper()}')
     plt.show()
 

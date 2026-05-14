@@ -1,5 +1,5 @@
 import numpy as np
-from utils import loss_chart, evaluation_chart, category_price_chart
+from utils.utils import loss_chart, evaluation_chart, category_price_chart
 
 W1 = W2 = W3 = W4 = b1 = b2 = b3 = b4 = None
 

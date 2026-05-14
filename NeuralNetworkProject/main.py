@@ -1,16 +1,13 @@
-from dataset import Dataset
-from from_scratch import NN_from_scratch
-from scikit_learn_NN import MLP_NN
-from scikit_learn_LR import linear_regression
-from scikit_learn_RF import random_forest
-from utils import MSE_comparison, MAE_comparison, training_MSE_chart, training_R2_chart, tests_summary, summary_chart
 import matplotlib.pyplot as plt
+from utils.dataset import Dataset
+from utils.utils import MSE_comparison, MAE_comparison, training_MSE_chart, training_R2_chart, tests_summary, summary_chart
+from algorithms.from_scratch import NN_from_scratch
+from algorithms.scikit_learn_NN import MLP_NN
+from algorithms.scikit_learn_LR import linear_regression
+from algorithms.scikit_learn_RF import random_forest
 
 def main() -> None:
-    ds = Dataset('kc_house_data.csv')
-
-    # NN_from_scratch(ds, 64, 32, 16, 1000, 0.001)
-
+    ds = Dataset('utils/kc_house_data.csv')
     scikit_NN_mse_results = []
     scikit_NN_mae_results = []
     loss_curves = []
@@ -20,32 +17,32 @@ def main() -> None:
     scikit_RF_mse_results = []
     scikit_RF_mae_results = []
     all_tests = []
-    test_dict = dict(params = "", mse = 0, mae = 0)
+
+     # NN_from_scratch(ds, 64, 32, 16, 1000, 0.001)
     
-    # H1 size, H2 size, H3 size, model, solver, max_iter, alpha
     scikit_NN_tests = [
-        # [128, 64, 32, 'logistic', 'adam', 10000, 0.0001],
-        # [64, 32, 16, 'logistic', 'adam', 10000, 0.0001],
-        # [64, 32, 8, 'logistic', 'adam', 10000, 0.0001],
-        # [128, 64, 32, 'relu', 'adam', 10000, 0.0001],
-        # [64, 32, 16, 'relu', 'adam', 10000, 0.0001],
-        # [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
-        # [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
+        [128, 64, 32, 'logistic', 'adam', 10000, 0.0001],
+        [64, 32, 16, 'logistic', 'adam', 10000, 0.0001],
+        [64, 32, 8, 'logistic', 'adam', 10000, 0.0001],
+        [128, 64, 32, 'relu', 'adam', 10000, 0.0001],
+        [64, 32, 16, 'relu', 'adam', 10000, 0.0001],
+        [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
+        [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
         [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
         [64, 32, 16, 'logistic', 'sgd', 10000, 0.0001],
-        # [64, 32, 8, 'logistic', 'sgd', 10000, 0.0001],
-        # [128, 64, 32, 'relu', 'sgd', 10000, 0.0001],
+        [64, 32, 8, 'logistic', 'sgd', 10000, 0.0001],
+        [128, 64, 32, 'relu', 'sgd', 10000, 0.0001],
         [64, 32, 16, 'relu', 'sgd', 10000, 0.0001],
         [64, 32, 8,  'relu', 'sgd', 10000, 0.0001]
     ]
 
     scikit_RF_tests = [
-        [500, 30],
-        [425, 25],
-        [250, 20],
-        [200, 20],
-        [400, 25],
-        [300, 30]
+        # [500, 30],
+        # [425, 25],
+        # [250, 20],
+        # [200, 20],
+        # [400, 25],
+        # [300, 30]
     ]
 
     for test in scikit_NN_tests:
@@ -93,8 +90,8 @@ def main() -> None:
     MAE_comparison(scikit_RF_mae_results)
 
     tests_summary(all_tests)
-    summary_chart(all_tests, 'mse')
-    summary_chart(all_tests, 'mse')
+    summary_chart(all_tests, "mse")
+    summary_chart(all_tests, "mae")
     
 if __name__ == "__main__":
     main()

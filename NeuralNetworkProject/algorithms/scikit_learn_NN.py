@@ -1,11 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPRegressor
-from utils import  mse_mae_test, evaluation_chart, mse_chart
+from utils.utils import  mse_mae_test, evaluation_chart, mse_chart
 
 def convert_r2_to_mse(r2_scores, y_val_norm):
     variance = np.var(y_val_norm)
-    
     mse_scores = [(1 - r2) * variance for r2 in r2_scores]
     return mse_scores
 

@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 from sklearn.linear_model import LinearRegression
-from utils import mse_mae_test, evaluation_chart, show_features_importance
+from utils.utils import mse_mae_test, evaluation_chart, show_features_importance
 
 import pandas as pd
 import matplotlib.pyplot as plt
