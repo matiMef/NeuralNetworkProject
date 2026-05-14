@@ -1,9 +1,6 @@
 from sklearn.linear_model import LinearRegression
 from utils.utils import mse_mae_test, evaluation_chart, show_features_importance
 
-import pandas as pd
-import matplotlib.pyplot as plt
-
 def linear_regression(ds) -> list:
     line_regr = LinearRegression()
     line_regr.fit(ds.X_tren, ds.Y_tren_norm.ravel())

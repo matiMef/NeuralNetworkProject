@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from utils.dataset import Dataset
 from utils.utils import training_MSE_chart, training_R2_chart, tests_summary, summary_chart
 from algorithms.from_scratch import NN_from_scratch
