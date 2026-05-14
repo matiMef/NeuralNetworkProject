@@ -3,30 +3,8 @@ from from_scratch import NN_from_scratch
 from scikit_learn_NN import MLP_NN
 from scikit_learn_LR import linear_regression
 from scikit_learn_RF import random_forest
-from utils import MSE_comparison, MAE_comparison, MLP_NN_traning_MSE_chart, MLP_NN_traning_R2_chart, all_tests_summary
+from utils import MSE_comparison, MAE_comparison, training_MSE_chart, training_R2_chart, tests_summary, summary_chart
 import matplotlib.pyplot as plt
-
-def wykres(all_tests):
-    kategorie = []
-    wartosci = []
-
-    for result in range(len(all_tests)):
-        result_dict = all_tests[result]
-        title = result_dict.get("params")
-        mse = result_dict.get("mse")
-        mae = result_dict.get("mae")
-        kategorie.append(title)
-        wartosci.append(mse)
-
-    plt.bar(kategorie, wartosci, color='skyblue')
-
-
-    plt.title('Przykładowy wykres słupkowy')
-    plt.xlabel('Kategorie')
-    plt.ylabel('Wartości')
-
-
-    plt.show()
 
 def main() -> None:
     ds = Dataset('kc_house_data.csv')
@@ -53,21 +31,21 @@ def main() -> None:
         # [64, 32, 16, 'relu', 'adam', 10000, 0.0001],
         # [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
         # [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
-        # [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
-        # [64, 32, 16, 'logistic', 'sgd', 10000, 0.0001],
+        [64, 32, 8,  'relu', 'adam', 10000, 0.0001],
+        [64, 32, 16, 'logistic', 'sgd', 10000, 0.0001],
         # [64, 32, 8, 'logistic', 'sgd', 10000, 0.0001],
         # [128, 64, 32, 'relu', 'sgd', 10000, 0.0001],
-        # [64, 32, 16, 'relu', 'sgd', 10000, 0.0001],
-        # [64, 32, 8,  'relu', 'sgd', 10000, 0.0001]
+        [64, 32, 16, 'relu', 'sgd', 10000, 0.0001],
+        [64, 32, 8,  'relu', 'sgd', 10000, 0.0001]
     ]
 
     scikit_RF_tests = [
         [500, 30],
-        # [425, 25],
-        # [250, 20],
-        # [200, 20],
-        # [400, 25],
-        # [300, 30]
+        [425, 25],
+        [250, 20],
+        [200, 20],
+        [400, 25],
+        [300, 30]
     ]
 
     for test in scikit_NN_tests:
@@ -87,18 +65,18 @@ def main() -> None:
     print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ DLA TESTÓW SIECI NEURONOWYCH (TEST SET) ---")
     MSE_comparison(scikit_NN_mse_results)
     MAE_comparison(scikit_NN_mae_results)
-    MLP_NN_traning_MSE_chart(scikit_NN_tests, loss_curves)
-    MLP_NN_traning_R2_chart(scikit_NN_tests, validation_scores)
+    training_MSE_chart(scikit_NN_tests, loss_curves)
+    training_R2_chart(scikit_NN_tests, validation_scores)
     
-    # mse_result, mae_result = linear_regression(ds)
-    # scikit_LR_mse_results.append(mse_result)
-    # scikit_LR_mae_results.append(mae_result)
-    # current_result = {
-    #     "params": f"Linear Regression",
-    #     "mse": mse_result,
-    #     "mae": mae_result
-    # }
-    # all_tests.append(current_result)
+    mse_result, mae_result = linear_regression(ds)
+    scikit_LR_mse_results.append(mse_result)
+    scikit_LR_mae_results.append(mae_result)
+    current_result = {
+        "params": f"Linear Regression",
+        "mse": mse_result,
+        "mae": mae_result
+    }
+    all_tests.append(current_result)
     
     for test in scikit_RF_tests:
         mse_result, mae_result = random_forest(ds, test[0], test[1])
@@ -107,17 +85,16 @@ def main() -> None:
         current_result = {
         "params": f"N est: {test[0]}, Max depth: {test[1]}",
         "mse": mse_result,
-        "mae": mae_result
-    }
-    all_tests.append(current_result)
+        "mae": mae_result,
+        }
+        all_tests.append(current_result)
 
     MSE_comparison(scikit_RF_mse_results)
     MAE_comparison(scikit_RF_mae_results)
 
-    all_tests_summary(all_tests)
-    wykres(all_tests)
+    tests_summary(all_tests)
+    summary_chart(all_tests, 'mse')
+    summary_chart(all_tests, 'mse')
     
 if __name__ == "__main__":
     main()
-
-# dodac wykresy porowonojace mae i mse

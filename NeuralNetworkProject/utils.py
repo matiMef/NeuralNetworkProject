@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-def MSE_MAE_test(ds, model) -> list:
+def mse_mae_test(ds, model) -> list:
     y_test_pred_norm = model.predict(ds.X_test)
     y_test_pred_dollars = y_test_pred_norm * ds.y_std + ds.y_mean
     mae_test = mean_absolute_error(ds.Y_test, y_test_pred_dollars)
@@ -15,23 +15,17 @@ def MSE_MAE_test(ds, model) -> list:
 
 def MSE_comparison(scikit_results) -> None:
     best_result = float('inf')
-    best_result_idx = 999
     for result in range (len(scikit_results)):
         if scikit_results[result] < best_result:
             best_result = scikit_results[result]
-            best_result_idx = result
-    print('Test:', best_result_idx, 'Min MAE:', best_result)
 
 def MAE_comparison(scikit_results) -> None:
     best_result = float('inf')
-    best_result_idx = 999
     for result in range (len(scikit_results)):
         if scikit_results[result] < best_result:
             best_result = scikit_results[result]
-            best_result_idx = result
-    print('Test:', best_result_idx, 'Min MSE:', best_result)
 
-def all_tests_summary(all_tests) -> None:
+def tests_summary(all_tests) -> None:
     best_result_mse = float('inf')
     best_result_mae = float('inf')
     best_result_mse_idx = 999
@@ -55,23 +49,23 @@ def all_tests_summary(all_tests) -> None:
     print('Test:', best_result_mse_idx, 'Min MSE:', best_result_mse)
     print('Test:', best_result_mae_idx , 'Min MAE:', best_result_mae)
 
-def MLP_NN_traning_MSE_chart(scikit_tests, loss_curves) -> None:
+def training_MSE_chart(scikit_tests, loss_curves) -> None:
     plt.figure(figsize=(12, 7))
     for i, loss_curve in enumerate(loss_curves):
         label = f"Test {i}: {scikit_tests[i][0:3]} {scikit_tests[i][4]}"
         plt.plot(loss_curve, label=label)
-    
     plt.title("Porównanie Krzywych Straty (MSE) dla wszystkich testów")
     plt.xlabel("Iteracje (Epoki)")
     plt.ylabel("Strata (Znormalizowana)")
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left') # Legenda poza wykresem
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True)
     plt.tight_layout()
     plt.show()
     
-def MLP_NN_traning_R2_chart(scikit_tests, validation_scores) -> None:
-    plt.figure(figsize=(12, 7))
+def training_R2_chart(scikit_tests, validation_scores) -> None:
     has_data = False
+    plt.figure(figsize=(12, 7))
+
     for i, v_score in enumerate(validation_scores):
         if len(v_score) > 0:
             label = f"Test {i}: {scikit_tests[i][3]}"
@@ -91,8 +85,7 @@ def MLP_NN_traning_R2_chart(scikit_tests, validation_scores) -> None:
     plt.tight_layout()
     plt.show()
 
-def mae_mse_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
-    plt.ion()
+def loss_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
     fig, (ax_mse, ax_mae) = plt.subplots(1, 2, figsize=(16, 6))
 
     l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
@@ -114,20 +107,17 @@ def mae_mse_chart(h_train_mse, h_val_mse, h_train_mae, h_val_mae) -> None:
     l_val_mae.set_data(range(len(h_val_mae)), h_val_mae)
     ax_mae.relim()
     ax_mae.autoscale_view()
-    plt.ioff()
     plt.show()
 
-def eval_chart(ds, y_test_pred) -> None:
-    mae = np.mean(np.abs(y_test_pred - ds.Y_test))
-    print(f"\n--- WYNIK KOŃCOWY ---")
-    print(f"Średni błąd (MAE): {mae:.2f} $")
+def evaluation_chart(ds, y_test_pred) -> None:
+    plt.title("Ewaluacja modelu na zbiorze testowym")
     plt.scatter(ds.Y_test, y_test_pred, alpha=0.5)
     plt.plot([ds.Y_test.min(), ds.Y_test.max()], [ds.Y_test.min(), ds.Y_test.max()], 'r--')
     plt.xlabel("Cena prawdziwa")
     plt.ylabel("Cena przewidziana")
     plt.show()
 
-def price_to_error_chart(ds, y_test_pred) -> None:
+def category_price_chart(ds, y_test_pred) -> None:
     squared_errors = (y_test_pred - ds.Y_test)**2
     bins = np.arange(0, ds.Y_test.max() + 200000, 200000)
     bin_labels = [f"{int(b/1000)}k-{int((b+200000)/1000)}k" for b in bins[:-1]]
@@ -148,4 +138,57 @@ def price_to_error_chart(ds, y_test_pred) -> None:
     plt.xticks(rotation=45)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
+    plt.show()
+
+def summary_chart(all_tests, option="mse") -> None:
+    categories = []
+    values = []
+    colors = plt.cm.tab10(np.linspace(0, 1, len(categories)))
+
+    for result_dict in all_tests:
+        idx = 0
+        categories.append(result_dict.get("params" + f"{idx}"))
+        values.append(result_dict.get(option))
+        idx+=1
+    
+    plt.figure(figsize=(12, 6))
+    plt.bar(categories, values, color=colors)
+    plt.title(f'Porównanie modeli za pomocą {option.upper()}')
+    plt.xlabel('Parametry modelu')
+    plt.xticks(rotation=45)
+    plt.ylabel(f'Metryka: {option.upper()}')
+    plt.show()
+
+def show_features_importance(model, option="Regresja Liniowa") -> None:
+    features = ["sqft_living", "sqft_lot", "lat", "long", "floors", 
+                "bedrooms", "bathrooms", "years_since_refurb", "house_age"]
+    if option == "Regresja Liniowa":
+        coefs = pd.Series(model.coef_, index=features).sort_values(ascending=False)
+    else:
+        coefs = pd.Series(model.feature_importances_, index=features).sort_values(ascending=False)
+    colors = ['skyblue' if c > 0 else 'salmon' for c in coefs]
+    
+    plt.figure(figsize=(12, 6))
+    plt.bar(coefs.index, coefs.values, color=colors)
+    plt.axhline(0, color='black', linewidth=0.8) 
+    plt.title(f"Istotność cech - {option} (Współczynniki)")
+    plt.ylabel("Wartość współczynnika")
+    plt.xlabel("Cechy")
+    plt.xticks(rotation=45)
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def mse_chart(train_mse, val_mse) -> None:
+    fig, (ax_mse) = plt.subplots(1, 1, figsize=(16, 6))
+
+    l_train_mse, = ax_mse.plot([], [], 'r-', label='Train MSE')
+    l_val_mse, = ax_mse.plot([], [], 'b-', label='Val MSE')
+    ax_mse.set_title("Koszt (MSE) - Normalizacja")
+    ax_mse.legend()
+
+    l_train_mse.set_data(range(len(train_mse)), train_mse)
+    l_val_mse.set_data(range(len(val_mse)),  val_mse)
+    ax_mse.relim()
+    ax_mse.autoscale_view()
     plt.show()

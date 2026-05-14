@@ -1,9 +1,9 @@
 import numpy as np
-from utils import mae_mse_chart, eval_chart, price_to_error_chart
+from utils import loss_chart, evaluation_chart, category_price_chart
 
 W1 = W2 = W3 = W4 = b1 = b2 = b3 = b4 = None
 
-def initialize_layers(H1_size, H2_size, H3_size):
+def initialize_layers(H1_size, H2_size, H3_size) -> None:
     global W1, W2, W3, W4, b1, b2, b3, b4
     W1 = np.random.randn(9, H1_size ) * np.sqrt(2./9)
     b1 = np.zeros((1, H1_size ))
@@ -118,8 +118,6 @@ def NN_from_scratch(ds, H1_size=64, H2_size=32, H3_size=16, epochs=10000, alpha=
     train_history_mse, val_history_mse, train_history_mae, val_history_mae = train(ds, epochs, alpha)
     y_test_pred = predict(ds, ds.X_test)
 
-    mae_mse_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae)
-    eval_chart(ds, y_test_pred)
-    price_to_error_chart(ds, y_test_pred)
-
-
+    loss_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae)
+    evaluation_chart(ds, y_test_pred)
+    category_price_chart(ds, y_test_pred)
