@@ -67,11 +67,6 @@ def backprop(y_hat, Y, cache) -> tuple:
 
     return dW1, db1, dW2, db2, dW3, db3, dW4, db4
 
-def mae_metric(ds, y_hat, y, scale_back=False) -> float:
-    if scale_back:
-        return np.mean(np.abs((y_hat * ds.y_std + ds.y_mean) - (y * ds.y_std + ds.y_mean)))
-    return np.mean(np.abs(y_hat - y))
-
 def train(ds, epochs=10000, alpha=0.01) -> tuple:
     global W1, W2, W3, W4, b1, b2, b3, b4
     h_train_mse = []
@@ -86,11 +81,8 @@ def train(ds, epochs=10000, alpha=0.01) -> tuple:
         y_val_hat, _ = feed_forward(ds.X_val)
         val_loss_mse = cost(y_val_hat, ds.Y_val_norm)
 
-        train_mse = np.mean(np.abs(y_hat - ds.Y_tren_norm)) * ds.y_std
-        val_mse = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
-
         train_mae = np.mean(np.abs(y_hat - ds.Y_tren_norm)) * ds.y_std
-        val_mae = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
+        val_mae   = np.mean(np.abs(y_val_hat - ds.Y_val_norm)) * ds.y_std
 
         h_train_mse.append(loss_mse)
         h_val_mse.append(val_loss_mse)
@@ -109,28 +101,32 @@ def train(ds, epochs=10000, alpha=0.01) -> tuple:
         b4 -= alpha * db4
 
         if e % 250 == 0:
-            print(f"Epoch {e} | Train MSE: {train_mse:.0f}$ | Val MSE: {val_mse:.0f}$")
+            print(f"Epoch {e} | Train MSE: {train_mae:.0f}$ | Val MSE: {val_mae:.0f}$")
             print(f"Epoch {e} | Train MAE: {train_mae:.0f}$ | Val MAE: {val_mae:.0f}$")
 
     return h_train_mse, h_val_mse, h_train_mae, h_val_mae
 
-def mse_mae_test(ds) -> tuple:
+def mse_mae_test(ds, model_name: str = "") -> tuple:
     y_test_pred_dollars = predict(ds, ds.X_test)
     mae_test = mean_absolute_error(ds.Y_test, y_test_pred_dollars)
     y_test_pred_norm = (y_test_pred_dollars - ds.y_mean) / ds.y_std
     mse_test = mean_squared_error(ds.Y_test_norm, y_test_pred_norm)
     print(f"\n--- WYNIKI EWALUACJI KOŃCOWEJ (TEST SET) ---")
+    if model_name:
+        print(f"Model: {model_name}")
     print(f"Błąd MSE (znormalizowany): {mse_test:.6f}")
     print(f"Błąd MAE: {mae_test:.2f} $")
     return mse_test, mae_test
 
 def NN_from_scratch(ds, H1_size=64, H2_size=32, H3_size=16, epochs=10000, alpha=0.001) -> tuple:
+    model_name = f"Sieć neuronowa from scratch (NumPy) | Warstwy: {H1_size}-{H2_size}-{H3_size} | Epoki: {epochs} | LR: {alpha}"
+
     initialize_layers(H1_size, H2_size, H3_size)
     train_history_mse, val_history_mse, train_history_mae, val_history_mae = train(ds, epochs, alpha)
     y_test_pred = predict(ds, ds.X_test)
     
-    mse_test, mae_test = mse_mae_test(ds)
-    loss_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae)
-    evaluation_chart(ds, y_test_pred)
-    category_price_chart(ds, y_test_pred)
+    mse_test, mae_test = mse_mae_test(ds, model_name)
+    loss_chart(train_history_mse, val_history_mse, train_history_mae, val_history_mae, model_name)
+    evaluation_chart(ds, y_test_pred, model_name)
+    category_price_chart(ds, y_test_pred, model_name)
     return mse_test, mae_test
